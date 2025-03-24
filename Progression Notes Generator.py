@@ -21,10 +21,10 @@ def process_board_decisions(excel_file, programme_name, sheet_name="Summary"):
     except Exception as e:
         st.error(f"Error reading the sheet '{sheet_name}': {e}")
         return None, None
-    
+
     doc = Document()
-    decision_texts = []  # To collect each decision output for display
-    
+    decision_texts = []  # To collect generated decision texts
+
     for index, row in df.iterrows():
         studentID = row.iloc[2]   # Column C: Student ID
         decision  = row.iloc[8]    # Column I: Decision/Notes
@@ -32,8 +32,7 @@ def process_board_decisions(excel_file, programme_name, sheet_name="Summary"):
         templateCode = row.iloc[11] if len(row) > 11 else ""
         if pd.isna(templateCode):
             templateCode = ""
-        
-        # Build the template content based on the template code
+
         if templateCode == "" or templateCode is None:
             templateContent = f"{studentID}, {name}, {programme_name}\n\n" \
                               "There is no need to paste this record into the SPI screen in SITS."
@@ -98,7 +97,7 @@ def process_board_decisions(excel_file, programme_name, sheet_name="Summary"):
                               "You must check this page so you gain an understanding of your current grades and the necessary steps of what to do next."
         else:
             templateContent = "No valid template code provided."
-        
+
         doc.add_paragraph(templateContent)
         doc.add_paragraph("-" * 40)
         decision_texts.append(templateContent)
@@ -124,7 +123,7 @@ This app generates progression notes for students based on the Exam Board Spread
 - The generated decisions will also be displayed on the page.
 """)
 
-# Input for Programme Name
+# User input for Programme Name
 programme_name = st.text_input("Enter Programme Name:")
 
 # File uploader for the Exam Board Spreadsheet
@@ -134,13 +133,15 @@ if uploaded_file and programme_name:
     doc_bytes, decisions = process_board_decisions(uploaded_file, programme_name, sheet_name="Summary")
     
     if doc_bytes is not None:
+        # Generate file name based on the programme name
+        doc_filename = f"{programme_name}_Board_Decisions.docx"
         st.success("Document generated successfully!")
         
-        # Download button for the generated docx file
+        # Download button for the generated Word document
         st.download_button(
             label="Download Generated Word Document",
             data=doc_bytes,
-            file_name="Board_Decisions.docx",
+            file_name=doc_filename,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
         
@@ -152,7 +153,6 @@ if uploaded_file and programme_name:
 else:
     st.info("Please enter the Programme Name and upload the Exam Board Spreadsheet to generate the progression notes.")
 
-# Display a table of template codes and their descriptions
 st.header("Template Codes Reference")
 template_data = {
     "Template Code": ["(Empty)", "A", "B", "C", "D", "E", "F", "G"],
@@ -169,3 +169,4 @@ template_data = {
 }
 template_df = pd.DataFrame(template_data)
 st.table(template_df)
+
